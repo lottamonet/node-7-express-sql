@@ -71,14 +71,43 @@ async function getAnimalsByCategory(category) {
 }
 
 // 7. deleteOneAnimal(id)
+async function deleteOneAnimal(id) {
+  await db.query("DELETE FROM animals WHERE id = $1", [id]);
+} 
 
 // 8. addOneAnimal(name, category, can_fly, lives_in)
+async function addOneAnimal(name, category, can_fly, lives_in) {
+  await db.query(
+        "INSERT INTO animals (name, category, can_fly, lives_in) VALUES ($1, $2, $3, $4)",
+        [name, category, can_fly, lives_in]
+    );
+} 
 
 // 9. updateOneAnimalName(id, newName)
+async function updateOneAnimalName(id, newName) {
+  await db.query(
+        "UPDATE animals SET name = $1 WHERE id = $2",
+        [newName, id]
+  )
+}
+
 
 // 10. updateOneAnimalCategory(id, newCategory)
+async function updateOneAnimalCategory(id, newCategory) {
+  await db.query(
+        "UPDATE animals SET category = $1 WHERE id = $2",
+        [newCategory, id]
+  )
+}
 
 // 11. 🌟 BONUS CHALLENGE — addManyAnimals(animals)
+async function addManyAnimals(animals) {
+  const query = "INSERT INTO animals (name, category, can_fly, lives_in) VALUES ($1, $2, $3, $4)";
+  for (const animal of animals) {
+    const { name, category, can_fly, lives_in } = animal;
+    await db.query(query, [name, category, can_fly, lives_in]);
+  } 
+}
 
 // ---------------------------------
 // API Endpoints
@@ -124,11 +153,55 @@ app.get("/get-animals-by-category/:category", async (req, res) => {
 })
 
 // 7. POST /delete-one-animal/:id
+  app.post("/delete-one-animal/:id", async (req, res) => {
+    await deleteOneAnimal(req.params.id);
+    res.send(`Success! Animal with id ${req.params.id} was deleted!`);
+  })
 
 // 8. POST /add-one-animal
+app.post("/add-one-animal", async (req, res) => {
+  //get the data from the request body
+  const { name, category, can_fly, lives_in } = req.body;
+
+  //insert the data into the database
+  await addOneAnimal(name, category, can_fly, lives_in);
+
+  //return the newly added animal
+  res.send(`Successfully added ${name} to the database!`);
+})
 
 // 9. POST /update-one-animal-name
+app.post("/update-one-animal-name", async (req,res) => {
+  //get the data from the request body
+  const { id , newName } = req.body;
+
+  //update the animal name in the database
+  await updateOneAnimalName(id, newName);
+
+  //return the updated animal
+  res.send(`Successfully updated animal with id ${id} to have name ${newName}!`);
+})
 
 // 10. POST /update-one-animal-category
+app.post("/update-one-animal-category", async (req, res) => {
+  //get the data from the request body
+  const { id, newCategory } = req.body;
+
+  //update the animal category in the database
+  await updateOneAnimalCategory(id, newCategory);
+
+  //return the updated animal
+  res.send(`Successfully updated animal with id ${id} to have category ${newCategory}!`);
+});
 
 // 11. 🌟 BONUS CHALLENGE — POST /add-many-animals
+app.post("/add-many-animals", async (req, res) => { 
+  //get the data from the request body
+  const animals = req.body.animals;
+
+  //insert the data into the database
+  await addManyAnimals(animals);
+
+  //return the newly added animals
+  res.send(`Successfully added ${animals.length} animals to the database!`);
+})
